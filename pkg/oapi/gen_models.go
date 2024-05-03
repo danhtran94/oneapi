@@ -132,31 +132,29 @@ func exprToProp(expr ast.Expr) *base.SchemaProxy {
 		}
 
 		// The field is a custom type
-		if t.Obj != nil && t.Obj.Decl != nil {
-			return base.CreateSchemaProxyRef(fmt.Sprintf("#/components/schemas/%s", t.Name))
+		return base.CreateSchemaProxyRef(fmt.Sprintf("#/components/schemas/%s", t.Name))
 
-			// TODO: handle struct types recursively
-			// switch decl := t.Obj.Decl.(type) {
-			// case *ast.TypeSpec:
-			// 	if structType, ok := decl.Type.(*ast.StructType); ok {
-			// 		p := &OpenAPIProperty{
-			// 			Type:       "object",
-			// 			GoType:     t.Name,
-			// 			Properties: make(map[string]*OpenAPIProperty),
-			// 		}
+		// TODO: handle struct types recursively
+		// switch decl := t.Obj.Decl.(type) {
+		// case *ast.TypeSpec:
+		// 	if structType, ok := decl.Type.(*ast.StructType); ok {
+		// 		p := &OpenAPIProperty{
+		// 			Type:       "object",
+		// 			GoType:     t.Name,
+		// 			Properties: make(map[string]*OpenAPIProperty),
+		// 		}
 
-			// 		for _, field := range structType.Fields.List {
-			// 			for _, name := range field.Names {
-			// 				if prop := exprToProperty(field.Type); prop != nil {
-			// 					p.Properties[name.Name] = prop
-			// 				}
-			// 			}
-			// 		}
+		// 		for _, field := range structType.Fields.List {
+		// 			for _, name := range field.Names {
+		// 				if prop := exprToProperty(field.Type); prop != nil {
+		// 					p.Properties[name.Name] = prop
+		// 				}
+		// 			}
+		// 		}
 
-			// 		return p
-			// 	}
-			// }
-		}
+		// 		return p
+		// 	}
+		// }
 	case *ast.StarExpr:
 		// The field is a pointer to another type
 		return exprToProp(t.X)
@@ -219,5 +217,8 @@ func exprToProp(expr ast.Expr) *base.SchemaProxy {
 		})
 	}
 
-	return nil
+	return base.CreateSchemaProxy(&base.Schema{
+		Type:        []string{"null"},
+		Description: "unknown",
+	})
 }

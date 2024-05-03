@@ -16,9 +16,3 @@ type User struct {
 
 	CreatedAt time.Time `json:"at"`
 }
-
-type Company struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	Employees []User `json:"employees"`
-}

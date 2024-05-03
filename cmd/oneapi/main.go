@@ -22,10 +22,16 @@ func main() {
 	doc := &v3.Document{
 		Version: "3.1.0",
 		Info: &base.Info{
-			Title: "OneAPI",
+			Version: "1.0.0",
+			Title:   "OneAPI",
 			Contact: &base.Contact{
 				Name:  "danhtran94",
 				Email: "danh.tt1294@gmail.com",
+			},
+		},
+		Servers: []*v3.Server{
+			{
+				URL: "http://localhost:3000",
 			},
 		},
 		Components: &v3.Components{

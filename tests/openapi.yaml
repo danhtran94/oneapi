@@ -1,11 +1,29 @@
 openapi: 3.1.0
 info:
-    title: One API
+    title: OneAPI
     contact:
         name: danhtran94
         email: danh.tt1294@gmail.com
+    version: 1.0.0
+servers:
+    - url: http://localhost:3000
 components:
     schemas:
+        Company:
+            type: object
+            properties:
+                ID:
+                    type: integer
+                    description: int
+                Name:
+                    type: string
+                    description: string
+                Employees:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/User'
+                    description: '[]User'
+            description: struct
         User:
             type: object
             properties:
@@ -29,20 +47,5 @@ components:
                 CreatedAt:
                     type: string
                     description: time.Time
-            description: struct
-        Company:
-            type: object
-            properties:
-                ID:
-                    type: integer
-                    description: int
-                Name:
-                    type: string
-                    description: string
-                Employees:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/User'
-                    description: '[]User'
             description: struct
 

@@ -1,4 +1,4 @@
-package oapi
+package apidoc
 
 import (
 	"bytes"
@@ -46,7 +46,7 @@ func oapiType(t string) (string, bool) {
 
 func GenerateSchemas(path string) (*orderedmap.Map[string, *base.SchemaProxy], error) {
 	if path == "" {
-		path = "./models/models.go"
+		path = "./models/*.go"
 	}
 
 	return globToSchemas(path)

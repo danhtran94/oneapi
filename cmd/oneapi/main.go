@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/danhtran94/oneapi/pkg/oapi"
+	"github.com/danhtran94/oneapi/pkg/apidoc"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
 func main() {
-	path := flag.String("path", "./models/models.go", "path to the models file")
+	path := flag.String("path", "./models/*.go", "path to the models file")
 	flag.Parse()
 
-	schemas, err := oapi.GenerateSchemas(*path)
+	schemas, err := apidoc.GenerateSchemas(*path)
 	if err != nil {
 		log.Fatalln(fmt.Errorf("[oapi] generate error: %w", err))
 	}

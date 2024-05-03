@@ -1,0 +1,48 @@
+openapi: 3.1.0
+info:
+    title: One API
+    contact:
+        name: danhtran94
+        email: danh.tt1294@gmail.com
+components:
+    schemas:
+        User:
+            type: object
+            properties:
+                ID:
+                    type: integer
+                    description: int
+                Username:
+                    type: string
+                    description: string
+                Email:
+                    type: string
+                    description: null.Val[string]
+                Shop:
+                    $ref: '#/components/schemas/Company'
+                Extras:
+                    type: object
+                    additionalProperties:
+                        type: string
+                        description: string
+                    description: map[string]string
+                CreatedAt:
+                    type: string
+                    description: time.Time
+            description: struct
+        Company:
+            type: object
+            properties:
+                ID:
+                    type: integer
+                    description: int
+                Name:
+                    type: string
+                    description: string
+                Employees:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/User'
+                    description: '[]User'
+            description: struct
+

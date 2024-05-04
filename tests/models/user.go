@@ -12,7 +12,7 @@ type User struct {
 	Email    null.Val[string] `json:"email"`
 
 	Shop   Company           `json:"company"`
-	Extras map[string]string `json:"aaaa"`
+	Extras map[string]string `json:"extras,omitempty"`
 
-	CreatedAt time.Time `json:"at"`
+	CreatedAt time.Time `json:"createdAt"`
 }

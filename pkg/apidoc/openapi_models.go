@@ -8,6 +8,7 @@ import (
 	"go/printer"
 	"go/token"
 	"path/filepath"
+	"strings"
 
 	base "github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/orderedmap"
@@ -201,11 +202,34 @@ func exprToProp(expr ast.Expr) *base.SchemaProxy {
 		})
 	case *ast.StructType:
 		propMap := orderedmap.New[string, *base.SchemaProxy]()
+		jsonNameByFields := map[string]string{}
+
+		// read field json tag value
+		for _, field := range t.Fields.List {
+			for _, name := range field.Names {
+				if field.Tag != nil {
+					tag := field.Tag.Value
+					slices := strings.Split(tag, `json:"`)
+					if len(slices) > 1 {
+						jsonTag := strings.Split(slices[1], `"`)
+						jsonName := strings.ReplaceAll(jsonTag[0], "omitempty", "")
+						jsonName = strings.ReplaceAll(jsonName, ",", "")
+						jsonName = strings.ReplaceAll(jsonName, " ", "")
+						jsonNameByFields[name.Name] = jsonName
+					}
+				}
+			}
+		}
 
 		for _, field := range t.Fields.List {
 			for _, name := range field.Names {
 				if prop := exprToProp(field.Type); prop != nil {
-					propMap.Set(name.Name, prop)
+					jsonName := name.Name
+					if jn, ok := jsonNameByFields[name.Name]; ok {
+						jsonName = jn
+					}
+
+					propMap.Set(jsonName, prop)
 				}
 			}
 		}

@@ -12,13 +12,13 @@ components:
         Company:
             type: object
             properties:
-                ID:
+                id:
                     type: integer
                     description: int
-                Name:
+                name:
                     type: string
                     description: string
-                Employees:
+                employees:
                     type: array
                     items:
                         $ref: '#/components/schemas/User'
@@ -27,24 +27,24 @@ components:
         User:
             type: object
             properties:
-                ID:
+                id:
                     type: integer
                     description: int
-                Username:
+                username:
                     type: string
                     description: string
-                Email:
+                email:
                     type: string
                     description: null.Val[string]
-                Shop:
+                company:
                     $ref: '#/components/schemas/Company'
-                Extras:
+                extras:
                     type: object
                     additionalProperties:
                         type: string
                         description: string
                     description: map[string]string
-                CreatedAt:
+                createdAt:
                     type: string
                     description: time.Time
             description: struct

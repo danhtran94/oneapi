@@ -11,6 +11,7 @@ require (
 	github.com/aarondl/json v0.0.0-20221020222930-8b0db17ef1bf // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/danhtran94/xdot v0.0.0-20240505201316-08a87638ea41 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect

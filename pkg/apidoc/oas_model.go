@@ -10,9 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	. "github.com/danhtran94/xdot"
+
 	base "github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/orderedmap"
 )
+
+type APIDoc struct{}
 
 func oapiType(t string) (string, bool) {
 	basicTypeToOpenAPIType := map[string]string{
@@ -53,19 +57,19 @@ func GenerateSchemas(path string) (*orderedmap.Map[string, *base.SchemaProxy], e
 	return globToSchemas(path)
 }
 
-func globToSchemas(globPath string) (*orderedmap.Map[string, *base.SchemaProxy], error) {
-	schemas := orderedmap.New[string, *base.SchemaProxy]()
+var ResponseKinds map[*ast.TypeSpec][]any = map[*ast.TypeSpec][]any{}
 
-	files, err := filepath.Glob(globPath)
-	if err != nil {
-		return schemas, err
-	}
+func globToSchemas(globPath string) (schemas *orderedmap.Map[string, *base.SchemaProxy], err error) {
+	try, pipe := TryPipe()
+	defer try(func(_err error) {
+		err = _err
+	})
+
+	schemas = orderedmap.New[string, *base.SchemaProxy]()
+	files := Must(filepath.Glob(globPath))(pipe)
 
 	for _, file := range files {
-		fschemas, err := fileToSchemas(file)
-		if err != nil {
-			return schemas, err
-		}
+		fschemas := Must(fileToSchemas(file))(pipe)
 
 		for pairs := fschemas.First(); pairs != nil; pairs = pairs.Next() {
 			schemas.Set(pairs.Key(), pairs.Value())
@@ -75,14 +79,16 @@ func globToSchemas(globPath string) (*orderedmap.Map[string, *base.SchemaProxy],
 	return schemas, nil
 }
 
-func fileToSchemas(filePath string) (*orderedmap.Map[string, *base.SchemaProxy], error) {
-	schemas := orderedmap.New[string, *base.SchemaProxy]()
+func fileToSchemas(filePath string) (schemas *orderedmap.Map[string, *base.SchemaProxy], err error) {
+	try, pipe := TryPipe()
+	defer try(func(_err error) {
+		err = _err
+	})
+
+	schemas = orderedmap.New[string, *base.SchemaProxy]()
 
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, filePath, nil, parser.ParseComments)
-	if err != nil {
-		return schemas, err
-	}
+	f := Must(parser.ParseFile(fset, filePath, nil, parser.ParseComments))(pipe)
 
 	for _, decl := range f.Decls {
 		genDecl, ok := decl.(*ast.GenDecl)
@@ -93,6 +99,10 @@ func fileToSchemas(filePath string) (*orderedmap.Map[string, *base.SchemaProxy],
 		if genDecl.Tok != token.TYPE {
 			continue
 		}
+
+		comment := genDecl.Doc.Text()
+		oapiDef := getOAPIDef(comment)
+		isResponseKind := oapiDef.Get(DefKind) == KindResponse
 
 		for _, spec := range genDecl.Specs {
 			typeSpec, ok := spec.(*ast.TypeSpec)
@@ -105,7 +115,30 @@ func fileToSchemas(filePath string) (*orderedmap.Map[string, *base.SchemaProxy],
 				continue
 			}
 
+			if isResponseKind {
+				ResponseKinds[typeSpec] = []any{structType, oapiDef}
+				continue
+			}
+
 			schemas.Set(typeSpec.Name.Name, exprToProp(structType))
+		}
+	}
+
+	modelNames := []string{}
+	for pairs := schemas.First(); pairs != nil; pairs = pairs.Next() {
+		modelNames = append(modelNames, pairs.Key())
+	}
+
+	for _, vals := range ResponseKinds {
+		structType, oapiDef := vals[0].(*ast.StructType), vals[1].(OAPIDef)
+
+		for _, model := range modelNames {
+			placeholder := oapiDef.Get(ResponsePlaceholder)
+			name := oapiDef.Get(ResponseName)
+
+			prop := exprToProp(structType, map[string]string{placeholder: model})
+			schemaName := fmt.Sprintf(name, model)
+			schemas.Set(schemaName, prop)
 		}
 	}
 
@@ -121,7 +154,7 @@ func exprToString(expr ast.Expr) string {
 	return buf.String()
 }
 
-func exprToProp(expr ast.Expr) *base.SchemaProxy {
+func exprToProp(expr ast.Expr, genericSchemas ...map[string]string) *base.SchemaProxy {
 	switch t := expr.(type) {
 	case *ast.Ident:
 		// The field is a basic type
@@ -130,6 +163,12 @@ func exprToProp(expr ast.Expr) *base.SchemaProxy {
 				Type:        []string{tp},
 				Description: t.Name,
 			})
+		}
+
+		if len(genericSchemas) > 0 {
+			if tp, ok := genericSchemas[0][t.Name]; ok {
+				return base.CreateSchemaProxyRef(fmt.Sprintf("#/components/schemas/%s", tp))
+			}
 		}
 
 		// The field is a custom type
@@ -158,7 +197,7 @@ func exprToProp(expr ast.Expr) *base.SchemaProxy {
 		// }
 	case *ast.StarExpr:
 		// The field is a pointer to another type
-		return exprToProp(t.X)
+		return exprToProp(t.X, genericSchemas...)
 	case *ast.SelectorExpr:
 		// The field is a type from another package
 		pkg := exprToString(t.X)
@@ -187,7 +226,7 @@ func exprToProp(expr ast.Expr) *base.SchemaProxy {
 			Type: []string{"array"},
 			Items: &base.DynamicValue[*base.SchemaProxy, bool]{
 				N: 0,
-				A: exprToProp(t.Elt),
+				A: exprToProp(t.Elt, genericSchemas...),
 			},
 			Description: fmt.Sprintf("[]%s", exprToString(t.Elt)),
 		})
@@ -196,13 +235,27 @@ func exprToProp(expr ast.Expr) *base.SchemaProxy {
 			Type: []string{"object"},
 			AdditionalProperties: &base.DynamicValue[*base.SchemaProxy, bool]{
 				N: 0,
-				A: exprToProp(t.Value),
+				A: exprToProp(t.Value, genericSchemas...),
 			},
 			Description: fmt.Sprintf("map[string]%s", exprToString(t.Value)),
 		})
 	case *ast.StructType:
 		propMap := orderedmap.New[string, *base.SchemaProxy]()
 		jsonNameByFields := map[string]string{}
+
+		// embedstructs := []string{}
+		// read embed struct
+		// for _, field := range t.Fields.List {
+		// 	if len(field.Names) == 0 {
+		// 		if sel, ok := field.Type.(*ast.SelectorExpr); ok {
+		// 			embedstructs = append(embedstructs, exprToString(sel))
+		// 			if field.Tag != nil {
+		// 				oapiTag := field.Tag.Value
+		// 				fmt.Println(oapiTag)
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		// read field json tag value
 		for _, field := range t.Fields.List {
@@ -223,7 +276,7 @@ func exprToProp(expr ast.Expr) *base.SchemaProxy {
 
 		for _, field := range t.Fields.List {
 			for _, name := range field.Names {
-				if prop := exprToProp(field.Type); prop != nil {
+				if prop := exprToProp(field.Type, genericSchemas...); prop != nil {
 					jsonName := name.Name
 					if jn, ok := jsonNameByFields[name.Name]; ok {
 						jsonName = jn

@@ -24,6 +24,103 @@ components:
                         $ref: '#/components/schemas/User'
                     description: '[]User'
             description: struct
+        CompanyCollection:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    description: int
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Company'
+                    description: '[]T'
+            description: struct
+        Order:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    description: int
+                customerId:
+                    type: integer
+                    description: int
+                note:
+                    type: string
+                    description: string
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/OrderItem'
+                    description: '[]OrderItem'
+            description: struct
+        OrderItem:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    description: int
+                orderId:
+                    type: integer
+                    description: int
+                product:
+                    $ref: '#/components/schemas/Product'
+                quantity:
+                    type: integer
+                    description: int
+                note:
+                    type: string
+                    description: string
+            description: struct
+        Product:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    description: int
+                name:
+                    type: string
+                    description: string
+                price:
+                    type: integer
+                    description: int
+            description: struct
+        OrderCollection:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    description: int
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Order'
+                    description: '[]T'
+            description: struct
+        OrderItemCollection:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    description: int
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/OrderItem'
+                    description: '[]T'
+            description: struct
+        ProductCollection:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    description: int
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Product'
+                    description: '[]T'
+            description: struct
         User:
             type: object
             properties:
@@ -47,5 +144,17 @@ components:
                 createdAt:
                     type: string
                     description: time.Time
+            description: struct
+        UserCollection:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    description: int
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/User'
+                    description: '[]T'
             description: struct
 
